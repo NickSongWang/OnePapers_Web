@@ -10,7 +10,7 @@ body {
 }
 
 .container {
-    max-width: 800px;
+    max-width: 1200px;
     width: 100%;
     background: white;
     padding: 30px;
@@ -18,31 +18,27 @@ body {
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
-h1 {
+h1, h3 {
     text-align: center;
     color: #333;
     margin-bottom: 20px;
 }
 
-/* 上传区域美化 */
+/* 上传区域 */
 .upload-area {
     position: relative;
-    margin: 20px 0;
+    margin: 20px auto;
     border: 2px dashed #ccc;
     border-radius: 8px;
     padding: 40px;
     text-align: center;
     transition: all 0.3s;
+    max-width: 600px;
 }
 
-.upload-area:hover {
+.upload-area:hover, .upload-area.drag-over {
     border-color: #4CAF50;
     background-color: #f9f9f9;
-}
-
-.upload-area.drag-over {
-    border-color: #4CAF50;
-    background-color: #e8f5e9;
 }
 
 .upload-label {
@@ -57,26 +53,195 @@ h1 {
     margin-bottom: 10px;
 }
 
-#upload {
-    display: none; /* 隐藏原生input */
+#upload, #reupload {
+    display: none;
+}
+
+/* 主内容区 */
+.main-content {
+    display: none;
+    grid-template-columns: 350px 1fr;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.uploaded .upload-area {
+    display: none;
+}
+
+.uploaded .main-content {
+    display: grid;
+}
+
+/* 控制面板 */
+.control-panel {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    height: fit-content;
+    position: sticky;
+    top: 20px;
 }
 
 /* 阈值控制区 */
-.controls {
-    margin: 20px 0;
+.threshold-controls {
+    margin: 30px 0;
+}
+
+.threshold-axis {
+    position: relative;
+    height: 60px;
+    margin-bottom: 15px;
+}
+
+.axis-line {
+    position: absolute;
+    top: 30px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: #333;
+}
+
+.axis-labels {
     display: flex;
-    align-items: center;
+    justify-content: space-between;
+    margin-top: 35px;
+    font-size: 12px;
+    color: #666;
+}
+
+.threshold-handle {
+    position: absolute;
+    top: 20px;
+    width: 16px;
+    height: 16px;
+    background: #2196F3;
+    border-radius: 50%;
+    transform: translateX(-50%);
+    cursor: grab;
+    z-index: 2;
+}
+
+.threshold-handle::after {
+    content: attr(data-value);
+    position: absolute;
+    top: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+.threshold-handle.active {
+    background: #0b7dda;
+    cursor: grabbing;
+}
+
+.threshold-actions {
+    display: flex;
+    justify-content: center;
     gap: 10px;
 }
 
-#threshold {
-    flex-grow: 1;
+.threshold-actions button {
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 50%;
+    background: #4CAF50;
+    color: white;
+    font-size: 18px;
+    cursor: pointer;
+    transition: all 0.3s;
 }
 
-/* 画布样式 */
-#canvas {
-    border: 1px solid #ddd;
-    max-width: 100%;
+.threshold-actions button:hover {
+    background: #45a049;
+}
+
+.threshold-actions button:disabled {
+    background: #cccccc;
+    cursor: not-allowed;
+}
+
+#remove-threshold {
+    background: #f44336;
+}
+
+#remove-threshold:hover {
+    background: #d32f2f;
+}
+
+/* 操作按钮 */
+.action-buttons {
+    margin-top: 20px;
+}
+
+#download {
     display: block;
-    margin: 0 auto;
+    width: 100%;
+    padding: 10px;
+    background: #2196F3;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background 0.3s;
+}
+
+#download:hover {
+    background: #0b7dda;
+}
+
+/* 重新上传按钮 */
+.reupload-area {
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.reupload-btn {
+    display: inline-block;
+    padding: 8px 16px;
+    background: #ff9800;
+    color: white;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.reupload-btn:hover {
+    background: #e68a00;
+}
+
+/* 图片预览区 */
+.image-preview {
+    background: #fff;
+    border-radius: 8px;
+    padding: 10px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+#canvas {
+    max-width: 100%;
+    max-height: 80vh;
+    border: 1px solid #eee;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .main-content {
+        grid-template-columns: 1fr;
+    }
+    .control-panel {
+        position: static;
+    }
 }

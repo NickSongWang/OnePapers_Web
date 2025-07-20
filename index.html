@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>本地图片二值化工具</title>
-    <link rel="stylesheet" href="style.css">  <!-- 引入独立CSS -->
+    <title>一张白纸</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
-        <h1>本地图片二值化工具</h1>
+        <h1>一张白纸 - 将故事藏在光影之间</h1>
         
-        <!-- 美化后的上传按钮区域 -->
+        <!-- 上传区域 -->
         <div class="upload-area" id="uploadArea">
             <input type="file" id="upload" accept="image/*">
             <label for="upload" class="upload-label">
@@ -19,15 +19,41 @@
             </label>
         </div>
 
-        <!-- 阈值控制区 -->
-        <div class="controls">
-            <label for="threshold">阈值 (0-255):</label>
-            <input type="range" id="threshold" min="0" max="255" value="128">
-            <span id="threshold-value">128</span>
-        </div>
+        <!-- 主内容区 -->
+        <div class="main-content" id="mainContent">
+            <!-- 左侧控制面板 -->
+            <div class="control-panel">
+                <div class="reupload-area">
+                    <input type="file" id="reupload" accept="image/*">
+                    <label for="reupload" class="reupload-btn">🔄 重新上传</label>
+                </div>
 
-        <!-- 画布展示区 -->
-        <canvas id="canvas"></canvas>
+                <h3>分段调整</h3>
+                <div class="threshold-controls">
+                    <div class="threshold-axis" id="thresholdAxis">
+                        <div class="axis-line"></div>
+                        <div class="axis-labels">
+                            <span></span>
+                            <span></span>
+                        </div>
+                        <!-- 阈值控制点动态插入 -->
+                    </div>
+                    <div class="threshold-actions">
+                        <button id="add-threshold" title="添加分割点">+</button>
+                        <button id="remove-threshold" title="移除分割点">-</button>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button id="download">💾 下载结果</button>
+                </div>
+            </div>
+            
+            <!-- 右侧图片展示区 -->
+            <div class="image-preview">
+                <canvas id="canvas"></canvas>
+            </div>
+        </div>
     </div>
 
     <script src="script.js"></script>
