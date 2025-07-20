@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>本地图片二值化工具</title>
+    <link rel="stylesheet" href="style.css">  <!-- 引入独立CSS -->
+</head>
+<body>
+    <div class="container">
+        <h1>本地图片二值化工具</h1>
+        
+        <!-- 美化后的上传按钮区域 -->
+        <div class="upload-area" id="uploadArea">
+            <input type="file" id="upload" accept="image/*">
+            <label for="upload" class="upload-label">
+                <span class="icon">📁</span>
+                <span>点击或拖拽图片到此处</span>
+            </label>
+        </div>
+
+        <!-- 阈值控制区 -->
+        <div class="controls">
+            <label for="threshold">阈值 (0-255):</label>
+            <input type="range" id="threshold" min="0" max="255" value="128">
+            <span id="threshold-value">128</span>
+        </div>
+
+        <!-- 画布展示区 -->
+        <canvas id="canvas"></canvas>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
