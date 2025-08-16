@@ -187,6 +187,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = imageData.data;
         
         // 3. 准备分段阈值（排序并添加边界）
+        //  .sort((a, b) => a - b): 确保阈值点按从小到大排序
+        //  使用扩展运算符...将数组展开
+        //  例如：用户设置[85,170] → [0,85,170,255]
         const thresholds = [0, ...state.thresholdPoints.sort((a, b) => a - b), 255];
         
         // 4. 处理每个像素
@@ -251,10 +254,18 @@ document.addEventListener('DOMContentLoaded', () => {
             img.onload = () => {
                 state.currentImage = img;
                 
-                // 设置画布尺寸
-                const { width, height } = calculateDisplaySize(img.width, img.height);
-                dom.canvas.width = width;
-                dom.canvas.height = height;
+                // // 设置画布尺寸
+                // const { width, height } = calculateDisplaySize(img.width, img.height);
+                // dom.canvas.width = width;
+                // dom.canvas.height = height;
+
+                // 画布尺寸使用原始图片尺寸，显示时缩小
+                dom.canvas.width = img.width;
+                dom.canvas.height = img.height;
+                // 通过CSS控制显示大小
+                const { width: displayWidth, height: displayHeight } = calculateDisplaySize(img.width, img.height);
+                dom.canvas.style.width = `${displayWidth}px`;
+                dom.canvas.style.height = `${displayHeight}px`;
                 
                 // 显示主界面
                 dom.container.classList.add('uploaded');
