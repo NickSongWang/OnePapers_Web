@@ -8,7 +8,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>一张白纸 - 将故事藏在光影之间</h1>
+        <h1>一张白纸 - 把故事藏在光影里</h1>
         
         <!-- 上传区域 -->
         <div class="upload-area" id="uploadArea">
@@ -44,6 +44,25 @@
                     </div>
                 </div>
 
+                <div class="smoothing-controls">
+                    <h3>平滑处理</h3>
+                    <div class="control-group">
+                        <label for="blur-radius">模糊半径:</label>
+                        <input type="range" id="blur-radius" min="0" max="5" step="0.5" value="3">
+                        <span id="blur-value">3px</span>
+                    </div>
+                    <div class="control-group">
+                        <label for="median-radius">中值滤波:</label>
+                        <input type="range" id="median-radius" min="0" max="3" step="1" value="1">
+                        <span id="median-value">1px</span>
+                    </div>
+                    <div class="control-group">
+                        <label for="morph-radius">边缘平滑:</label>
+                        <input type="range" id="morph-radius" min="0" max="2" step="1" value="1">
+                        <span id="morph-value">1px</span>
+                    </div>
+                </div>
+
                 <div class="action-buttons">
                     <button id="download-all">⏬ 下载所有白纸</button>
                 </div>
@@ -51,14 +70,13 @@
             
             <!-- 右侧图片展示区 -->
             <div class="image-preview">
-                <!-- <div class="preview-tabs">
-                    <button class="tab-btn active" data-tab="split">分割视图</button> 
+                <div class="preview-tabs">
+                    <button class="tab-btn active" data-tab="split">各页白纸</button> 
                     <button class="tab-btn" data-tab="combined">预览效果</button>
-                </div> -->
-                
+                </div>
                 
                 <!-- 叠加视图容器 -->
-                <div id="combined-view" class="combined-container tab-content">
+                <div id="combined-view" class="tab-content">
                     <div id="combined-canvas-wrapper" class="canvas-wrapper">
                         <div class="canvas-label">预览效果</div>
                         <canvas id="combined-canvas"></canvas>
@@ -66,12 +84,8 @@
                     </div>
                 </div>
 
-
                 <!-- 分割视图容器 -->
                 <div id="split-view" class="canvas-container tab-content active"></div>
-
-
-
             </div>
         </div>
     </div>

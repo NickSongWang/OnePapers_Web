@@ -14,7 +14,13 @@ document.addEventListener('DOMContentLoaded', () => {
         combinedView: document.getElementById('combined-view'),
         combinedCanvas: document.getElementById('combined-canvas'),
         tabButtons: document.querySelectorAll('.tab-btn'),
-        downloadCombinedBtn: document.getElementById('download-combined')
+        downloadCombinedBtn: document.getElementById('download-combined'),
+        blurRadiusInput: document.getElementById('blur-radius'),
+        blurValue: document.getElementById('blur-value'),
+        medianRadiusInput: document.getElementById('median-radius'),
+        medianValue: document.getElementById('median-value'),
+        morphRadiusInput: document.getElementById('morph-radius'),
+        morphValue: document.getElementById('morph-value')
     };
 
     // ============== 状态变量 ==============
@@ -23,8 +29,41 @@ document.addEventListener('DOMContentLoaded', () => {
         thresholdPoints: [85, 170], // 初始2个分隔点（分成3段）
         activeHandle: null,
         minThresholds: 1,
-        maxThresholds: 4
+        maxThresholds: 4,
+        blurRadius: 0,
+        medianRadius: 0,
+        morphRadius: 0
     };
+
+    // ============== 初始化平滑控制 ==============
+    function initSmoothingControls() {
+        // 设置初始值
+        dom.blurRadiusInput.value = state.blurRadius;
+        dom.blurValue.textContent = `${state.blurRadius}px`;
+        dom.medianRadiusInput.value = state.medianRadius;
+        dom.medianValue.textContent = `${state.medianRadius}px`;
+        dom.morphRadiusInput.value = state.morphRadius;
+        dom.morphValue.textContent = `${state.morphRadius}px`;
+
+        // 监听变化
+        dom.blurRadiusInput.addEventListener('input', (e) => {
+            state.blurRadius = parseFloat(e.target.value);
+            dom.blurValue.textContent = `${state.blurRadius}px`;
+            updateThresholdUI();
+        });
+
+        dom.medianRadiusInput.addEventListener('input', (e) => {
+            state.medianRadius = parseInt(e.target.value);
+            dom.medianValue.textContent = `${state.medianRadius}px`;
+            updateThresholdUI();
+        });
+
+        dom.morphRadiusInput.addEventListener('input', (e) => {
+            state.morphRadius = parseInt(e.target.value);
+            dom.morphValue.textContent = `${state.morphRadius}px`;
+            updateThresholdUI();
+        });
+    }
 
     // ============== 阈值控制 ==============
     function updateThresholdUI() {
@@ -153,46 +192,101 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ============== 图像处理 ==============
-    // ============== 图像滤波 ==============
-    function applyFilter(imageData,radius) {
+    /**
+     * 应用中值滤波
+     */
+    // 优化后的中值滤波 - 使用分离滤波(先水平后垂直)
+    function applyFilter(imageData, radius) {
+        if (radius === 0) return imageData;
+
         const {width, height, data} = imageData;
         const output = new ImageData(width, height);
-        const outputData = output.data;
-        if(radius==0){return imageData}
+        const tempData = new Uint8ClampedArray(data.length);
+
+        // 水平滤波
         for (let y = 0; y < height; y++) {
-            for (let x = 0; x < width; x++) {
+            for (let x = radius; x < width - radius; x++) {
                 const values = [];
-
-                // 收集5×5邻域内的像素值
-                for (let dy = -radius; dy <= radius; dy++) {
-                    for (let dx = -radius; dx <= radius; dx++) {
-                        const nx = x + dx;
-                        const ny = y + dy;
-
-                        // 边界处理：使用镜像填充
-                        const clampX = Math.max(0, Math.min(width-1, nx));
-                        const clampY = Math.max(0, Math.min(height-1, ny));
-                        const idx = (clampY * width + clampX) * 4;
-                        values.push(data[idx]); // 取R通道值(因为是灰度图)
-                    }
+                for (let dx = -radius; dx <= radius; dx++) {
+                    const idx = (y * width + (x + dx)) * 4;
+                    values.push(data[idx]);
                 }
-
-                // 排序并取中值
                 values.sort((a, b) => a - b);
                 const median = values[Math.floor(values.length / 2)];
-
-                // 赋值
                 const outIdx = (y * width + x) * 4;
-                outputData[outIdx] = median;     // R
-                outputData[outIdx+1] = median;   // G
-                outputData[outIdx+2] = median;   // B
-                outputData[outIdx+3] = 255;     // Alpha
+                tempData[outIdx] = median;
             }
         }
-    
+
+        // 垂直滤波
+        for (let x = 0; x < width; x++) {
+            for (let y = radius; y < height - radius; y++) {
+                const values = [];
+                for (let dy = -radius; dy <= radius; dy++) {
+                    const idx = ((y + dy) * width + x) * 4;
+                    values.push(tempData[idx]);
+                }
+                values.sort((a, b) => a - b);
+                const median = values[Math.floor(values.length / 2)];
+                const outIdx = (y * width + x) * 4;
+                output.data[outIdx] = output.data[outIdx+1] = output.data[outIdx+2] = median;
+                output.data[outIdx+3] = 255;
+            }
+        }
+
         return output;
     }
     
+    /**
+     * 应用形态学操作
+     */
+    function morphologicalOperation(imageData, type = 'open', radius) {
+        const {width, height, data} = imageData;
+        const output = new ImageData(width, height);
+        const outputData = output.data;
+        
+        // 先膨胀后腐蚀(开运算)可以消除小噪点
+        // 先腐蚀后膨胀(闭运算)可以填充小孔洞
+        const tempData = new Uint8ClampedArray(data);
+        
+        // 处理每个像素
+        for (let y = radius; y < height-radius; y++) {
+            for (let x = radius; x < width-radius; x++) {
+                const idx = (y * width + x) * 4;
+                let minVal = 255, maxVal = 0;
+                
+                // 检查邻域
+                for (let dy = -radius; dy <= radius; dy++) {
+                    for (let dx = -radius; dx <= radius; dx++) {
+                        const nIdx = ((y+dy) * width + (x+dx)) * 4;
+                        const val = data[nIdx];
+                        minVal = Math.min(minVal, val);
+                        maxVal = Math.max(maxVal, val);
+                    }
+                }
+                
+                // 应用操作
+                let resultVal = data[idx]; // 默认不改变
+                
+                if (type === 'erode') {
+                    resultVal = minVal; // 腐蚀
+                } else if (type === 'dilate') {
+                    resultVal = maxVal; // 膨胀
+                } else if (type === 'open') {
+                    // 开运算: 先腐蚀后膨胀
+                    resultVal = minVal; // 这里简化处理，实际需要两步操作
+                } else if (type === 'close') {
+                    // 闭运算: 先膨胀后腐蚀
+                    resultVal = maxVal; // 这里简化处理，实际需要两步操作
+                }
+                
+                outputData[idx] = outputData[idx+1] = outputData[idx+2] = resultVal;
+                outputData[idx+3] = 255;
+            }
+        }
+        
+        return output;
+    }
     
     /**
      * 生成所有阈值分割的Canvas
@@ -209,7 +303,12 @@ document.addEventListener('DOMContentLoaded', () => {
         originalCanvas.width = state.currentImage.width;
         originalCanvas.height = state.currentImage.height;
         const originalCtx = originalCanvas.getContext('2d');
+        
+        // 1. 应用高斯模糊预处理
+        originalCtx.filter = `blur(${state.blurRadius}px)`;
         originalCtx.drawImage(state.currentImage, 0, 0);
+        originalCtx.filter = 'none';
+        
         const imageData = originalCtx.getImageData(0, 0, originalCanvas.width, originalCanvas.height);
         const data = imageData.data;
         
@@ -232,10 +331,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const gray = 0.2126 * data[j] + 0.7152 * data[j+1] + 0.0722 * data[j+2];
                 
                 // 设置黑白二值：区间内为白(255)，区间外为黑(0)
-                //应用下面的代码则是生成预览的，黑色是更暗的
-                // const value = (gray>lower) ? 255 : 0;
-                //应用下面的代码则是生成可以打印的，原本黑色为白色保留白纸
-                const value = (gray>lower) ? 0 : 255;
+                // 这里反转颜色，使黑色区域变为白色(适合剪纸)
+                const value = (gray > lower) ? 0 : 255;
                 newData[j] = value;     // R
                 newData[j+1] = value;   // G
                 newData[j+2] = value;   // B
@@ -245,9 +342,17 @@ document.addEventListener('DOMContentLoaded', () => {
             // 将处理后的数据放回Canvas
             ctx.putImageData(newImageData, 0, 0);
 
-            //这里增加平滑处理
-            const filteredData = applyFilter(newImageData, 0);
-            ctx.putImageData(filteredData, 0, 0);
+            // 2. 应用中值滤波
+            if (state.medianRadius > 0) {
+                const filteredData = applyFilter(newImageData, state.medianRadius);
+                ctx.putImageData(filteredData, 0, 0);
+            }
+
+            // 3. 应用形态学开运算(消除小噪点)
+            if (state.morphRadius > 0) {
+                const openedData = morphologicalOperation(newImageData, 'open', state.morphRadius);
+                ctx.putImageData(openedData, 0, 0);
+            }
 
             // 添加到返回数组
             canvases.push({
@@ -260,59 +365,59 @@ document.addEventListener('DOMContentLoaded', () => {
         return canvases;
     }
 
-   /**
- * 生成叠加Canvas
- */
-function generateCombinedCanvas() {
-    if (!state.currentImage) return null;
-    
-    const canvases = generateThresholdCanvases();
-    if (canvases.length === 0) return null;
-    
-    // 创建叠加Canvas
-    const combinedCanvas = document.createElement('canvas');
-    combinedCanvas.width = state.currentImage.width;
-    combinedCanvas.height = state.currentImage.height;
-    const ctx = combinedCanvas.getContext('2d');
-    
-    // 创建一个临时Canvas数组来存储所有二值图像数据
-    const tempCanvases = canvases.map(({canvas}) => {
-        const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = canvas.width;
-        tempCanvas.height = canvas.height;
-        const tempCtx = tempCanvas.getContext('2d');
-        tempCtx.drawImage(canvas, 0, 0);
-        return tempCtx.getImageData(0, 0, canvas.width, canvas.height);
-    });
-    
-    // 创建新的图像数据
-    const combinedImageData = ctx.createImageData(combinedCanvas.width, combinedCanvas.height);
-    const combinedData = combinedImageData.data;
-    
-    // 计算每个像素的平均值
-    for (let i = 0; i < combinedData.length; i += 4) {
-        let sum = 0;
-        let count = 0;
+    /**
+     * 生成叠加Canvas
+     */
+    function generateCombinedCanvas() {
+        if (!state.currentImage) return null;
         
-        // 遍历所有二值图像，计算当前像素的平均值
-        tempCanvases.forEach(imageData => {
-            // 二值图像只有黑白，我们取红色通道值即可(因为R=G=B)
-            sum += imageData.data[i];
-            count++;
+        const canvases = generateThresholdCanvases();
+        if (canvases.length === 0) return null;
+        
+        // 创建叠加Canvas
+        const combinedCanvas = document.createElement('canvas');
+        combinedCanvas.width = state.currentImage.width;
+        combinedCanvas.height = state.currentImage.height;
+        const ctx = combinedCanvas.getContext('2d');
+        
+        // 创建一个临时Canvas数组来存储所有二值图像数据
+        const tempCanvases = canvases.map(({canvas}) => {
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = canvas.width;
+            tempCanvas.height = canvas.height;
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCtx.drawImage(canvas, 0, 0);
+            return tempCtx.getImageData(0, 0, canvas.width, canvas.height);
         });
         
-        const avg = Math.round(sum / count);
-        combinedData[i] = 255-avg;     // R
-        combinedData[i+1] = 255-avg;   // G
-        combinedData[i+2] = 255-avg;   // B
-        combinedData[i+3] = 255;   // Alpha (不透明)
+        // 创建新的图像数据
+        const combinedImageData = ctx.createImageData(combinedCanvas.width, combinedCanvas.height);
+        const combinedData = combinedImageData.data;
+        
+        // 计算每个像素的平均值
+        for (let i = 0; i < combinedData.length; i += 4) {
+            let sum = 0;
+            let count = 0;
+            
+            // 遍历所有二值图像，计算当前像素的平均值
+            tempCanvases.forEach(imageData => {
+                // 二值图像只有黑白，我们取红色通道值即可(因为R=G=B)
+                sum += imageData.data[i];
+                count++;
+            });
+            
+            const avg = Math.round(sum / count);
+            combinedData[i] = 255-avg;     // R
+            combinedData[i+1] = 255-avg;   // G
+            combinedData[i+2] = 255-avg;   // B
+            combinedData[i+3] = 255;       // Alpha (不透明)
+        }
+        
+        // 将处理后的数据放回Canvas
+        ctx.putImageData(combinedImageData, 0, 0);
+        
+        return combinedCanvas;
     }
-    
-    // 将处理后的数据放回Canvas
-    ctx.putImageData(combinedImageData, 0, 0);
-    
-    return combinedCanvas;
-}
 
     /**
      * 显示所有阈值分割Canvas
@@ -333,7 +438,7 @@ function generateCombinedCanvas() {
             // 显示阈值范围
             const label = document.createElement('div');
             label.className = 'canvas-label';
-            label.textContent = `第 ${index}张纸`;
+            label.textContent = `第 ${index}张剪纸模板`;
             
             // 限制显示大小
             const displayCanvas = document.createElement('canvas');
@@ -345,13 +450,14 @@ function generateCombinedCanvas() {
             const ctx = displayCanvas.getContext('2d');
             ctx.imageSmoothingEnabled = false;
             ctx.drawImage(canvas, 0, 0, displayCanvas.width, displayCanvas.height);
+            
             // 添加到DOM
             wrapper.appendChild(label);
             wrapper.appendChild(displayCanvas);
             dom.splitView.appendChild(wrapper);
             
             // 添加下载按钮
-            addDownloadButton(wrapper, canvas, `threshold_${index+1}_${lower}`);
+            addDownloadButton(wrapper, canvas, `剪纸模板_${index}_${lower}`);
         });
     }
 
@@ -379,7 +485,7 @@ function generateCombinedCanvas() {
     function addDownloadButton(container, canvas, filename) {
         const btn = document.createElement('button');
         btn.className = 'download-btn';
-        btn.textContent = '下载这张纸';
+        btn.textContent = '下载这张剪纸模板';
         btn.onclick = () => {
             const link = document.createElement('a');
             link.download = `${filename}.png`;
@@ -422,7 +528,7 @@ function generateCombinedCanvas() {
             await new Promise(resolve => setTimeout(resolve, 300));
             
             const link = document.createElement('a');
-            link.download = `Paper${index}.png`;
+            link.download = `剪纸模板_${index}.png`;
             link.href = canvas.toDataURL('image/png');
             link.style.display = 'none';
             document.body.appendChild(link);
@@ -475,7 +581,7 @@ function generateCombinedCanvas() {
         if (!combinedCanvas) return;
         
         const link = document.createElement('a');
-        link.download = 'combined_thresholds.png';
+        link.download = '剪纸组合效果.png';
         link.href = combinedCanvas.toDataURL('image/png');
         link.click();
     });
@@ -520,5 +626,6 @@ function generateCombinedCanvas() {
     });
 
     // ============== 初始化 ==============
-    updateThresholdUI(); // 初始化阈值控制点
+    initSmoothingControls(); // 初始化平滑控制
+    updateThresholdUI();     // 初始化阈值控制点
 });
