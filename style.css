@@ -16,6 +16,7 @@ body {
     padding: 30px;
     border-radius: 10px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    position: relative;
 }
 
 h1, h3 {
@@ -55,6 +56,41 @@ h1, h3 {
 
 #upload, #reupload {
     display: none;
+}
+
+/* 进度指示器 */
+#progress-container {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    z-index: 1000;
+    display: none;
+    width: 300px;
+    text-align: center;
+}
+
+.progress-bar {
+    height: 10px;
+    background: #444;
+    border-radius: 5px;
+    margin: 10px 0;
+    overflow: hidden;
+}
+
+#progress-fill {
+    height: 100%;
+    width: 0%;
+    background: #4CAF50;
+    transition: width 0.3s;
+}
+
+#progress-text {
+    font-size: 14px;
 }
 
 /* 主内容区 */
@@ -113,6 +149,41 @@ h1, h3 {
     width: 40px;
     font-size: 13px;
     text-align: right;
+}
+
+.quality-preset {
+    margin-top: 15px;
+}
+
+.quality-preset label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+    color: #555;
+}
+
+.preset-btn {
+    padding: 5px 10px;
+    margin-right: 5px;
+    background: #e0e0e0;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s;
+}
+
+.preset-btn.active {
+    background: #2196F3;
+    color: white;
+}
+
+.preset-btn:hover {
+    background: #ddd;
+}
+
+.preset-btn.active:hover {
+    background: #0b7dda;
 }
 
 /* 阈值控制区 */
@@ -356,5 +427,10 @@ h1, h3 {
     }
     .control-panel {
         position: static;
+    }
+    
+    #progress-container {
+        top: 10px;
+        width: 90%;
     }
 }

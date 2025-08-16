@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>一张白纸</title>
+    <title>剪纸图像生成器 - 优化版</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
-        <h1>一张白纸 - 把故事藏在光影里</h1>
+        <h1>剪纸图像生成器</h1>
         
         <!-- 上传区域 -->
         <div class="upload-area" id="uploadArea">
@@ -17,6 +17,14 @@
                 <span class="icon">📁</span>
                 <span>点击或拖拽图片到此处</span>
             </label>
+        </div>
+
+        <!-- 处理进度指示器 -->
+        <div id="progress-container">
+            <div class="progress-bar">
+                <div id="progress-fill"></div>
+            </div>
+            <div id="progress-text">准备就绪</div>
         </div>
 
         <!-- 主内容区 -->
@@ -33,10 +41,9 @@
                     <div class="threshold-axis" id="thresholdAxis">
                         <div class="axis-line"></div>
                         <div class="axis-labels">
-                            <span></span>
-                            <span></span>
+                            <span>0</span>
+                            <span>255</span>
                         </div>
-                        <!-- 阈值控制点动态插入 -->
                     </div>
                     <div class="threshold-actions">
                         <button id="add-threshold" title="添加分割点">+</button>
@@ -45,33 +52,34 @@
                 </div>
 
                 <div class="smoothing-controls">
-                    <h3>平滑处理</h3>
+                    <h3>图像优化</h3>
                     <div class="control-group">
-                        <label for="blur-radius">模糊半径:</label>
-                        <input type="range" id="blur-radius" min="0" max="5" step="0.5" value="3">
-                        <span id="blur-value">3px</span>
+                        <label for="blur-radius">预处理模糊:</label>
+                        <input type="range" id="blur-radius" min="0" max="5" step="0.5" value="2">
+                        <span id="blur-value">2px</span>
                     </div>
                     <div class="control-group">
-                        <label for="median-radius">中值滤波:</label>
-                        <input type="range" id="median-radius" min="0" max="3" step="1" value="1">
-                        <span id="median-value">1px</span>
+                        <label for="resize-scale">图像缩放:</label>
+                        <input type="range" id="resize-scale" min="0.3" max="1" step="0.1" value="0.7">
+                        <span id="resize-value">70%</span>
                     </div>
-                    <div class="control-group">
-                        <label for="morph-radius">边缘平滑:</label>
-                        <input type="range" id="morph-radius" min="0" max="2" step="1" value="1">
-                        <span id="morph-value">1px</span>
+                    <div class="quality-preset">
+                        <label>处理质量:</label>
+                        <button class="preset-btn" data-preset="low">快速</button>
+                        <button class="preset-btn active" data-preset="medium">平衡</button>
+                        <button class="preset-btn" data-preset="high">高质量</button>
                     </div>
                 </div>
 
                 <div class="action-buttons">
-                    <button id="download-all">⏬ 下载所有白纸</button>
+                    <button id="download-all">⏬ 下载所有剪纸模板</button>
                 </div>
             </div>
             
             <!-- 右侧图片展示区 -->
             <div class="image-preview">
                 <div class="preview-tabs">
-                    <button class="tab-btn active" data-tab="split">各页白纸</button> 
+                    <button class="tab-btn active" data-tab="split">分割视图</button> 
                     <button class="tab-btn" data-tab="combined">预览效果</button>
                 </div>
                 
