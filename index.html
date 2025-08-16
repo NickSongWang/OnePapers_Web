@@ -45,13 +45,33 @@
                 </div>
 
                 <div class="action-buttons">
-                    <button id="download">💾 下载结果</button>
+                    <button id="download-all">⏬ 下载所有白纸</button>
                 </div>
             </div>
             
             <!-- 右侧图片展示区 -->
             <div class="image-preview">
-                <canvas id="canvas"></canvas>
+                <!-- <div class="preview-tabs">
+                    <button class="tab-btn active" data-tab="split">分割视图</button> 
+                    <button class="tab-btn" data-tab="combined">预览效果</button>
+                </div> -->
+                
+                
+                <!-- 叠加视图容器 -->
+                <div id="combined-view" class="combined-container tab-content">
+                    <div id="combined-canvas-wrapper" class="canvas-wrapper">
+                        <div class="canvas-label">预览效果</div>
+                        <canvas id="combined-canvas"></canvas>
+                        <button id="download-combined" class="download-btn">下载预览图</button>
+                    </div>
+                </div>
+
+
+                <!-- 分割视图容器 -->
+                <div id="split-view" class="canvas-container tab-content active"></div>
+
+
+
             </div>
         </div>
     </div>
